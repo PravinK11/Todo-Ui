@@ -1,62 +1,33 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./Title.css";
+import TodoPopup from './TodoPopup'
 
 function TodoList() {
-  const [todo, setTodo] = useState([
-    {
-
-      todo: "Complete Assignment",
-      todo_desc: "Finish React Todo project",
-      deadline: "2026-02-20",
-      created_at: "2026-02-15",
-      updated_at: "2026-02-16",
-      priority: "High",
-      status: "Pending",
-
-    },
-    {
-
-      todo: "Prepare Presentation",
-      todo_desc: "Create slides for project demo",
-      deadline: "2026-02-25",
-      created_at: "2026-02-14",
-      updated_at: "2026-02-16",
-      priority: "Medium",
-      status: "In Progress",
-    },
-    {
-      todo: "Database Optimization",
-      todo_desc: "Improve SQL queries performance",
-      deadline: "2026-03-01",
-      created_at: "2026-02-10",
-      updated_at: "2026-02-15",
-      priority: "Low",
-      status: "Completed",
-
-    },
-
-  ]);
-
-  const [formData, setFormData] = useState({
-    todo: "",
-    deadline: "",
-    todo_desc: "",
-    created_at: "",
-    updated_at: "",
-    priority: "",
-    status: "",
-  });
+  const [todo, setTodo] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
 
+  useEffect(() => {
+    const fetchTodo = async() => {
+      const todo = await fetch('http://localhost:5000/todo')
+      const result = await todo.json();
+  
+      const newResult = result.map((r) => {
+        return {...r, status: r.todo_status}
+      })
+  
+      setTodo(newResult)
+      console.log(newResult)
+    }
+
+    fetchTodo()
+  }, [])  // component mount
+
+
   // Handle input change
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+
 
   // ADD TODO
   const handleSubmit = (e) => {
@@ -74,8 +45,19 @@ function TodoList() {
 
     setTodo([...todo, newTodo]);
 
+    fetch("url", {
+      method: "POST",
+      body: JSON.stringify({
+        todo: newTodo.todo
+      })
+    })
     resetForm();
   };
+
+  const openForm = () => {
+    modal.style.display = "block";
+  }
+
 
   // REMOVE TODO
   const removeButton = (todo) => {
@@ -128,13 +110,23 @@ function TodoList() {
 
   return (
     <div className="main-container">
+      <div className="centre-div">
+
+
+
+        <button onClick={() => setIsOpen(true)} className="btn">Add New Todo</button>
+      </div>
+
       {/* TODO LIST */}
       <div id="card" className="centre-div">
         <h2>Todos</h2>
+        <div>
+          <TodoPopup isOpen={isOpen} isEditing={isEditing} handleUpdate={handleUpdate} handleSubmit={handleSubmit} />
+        </div>
 
         {todo.map((i) => (
           <div className="todo-item centre-div">
-            
+
             <p><strong>Task:</strong> {i.todo}</p>
             <p><strong>Description:</strong>{i.todo_desc}</p>
             <p><strong>Deadline:</strong> {i.deadline}</p>
@@ -156,56 +148,8 @@ function TodoList() {
           </div>
         ))}
       </div>
-
-      {/* FORM */}
-      <div className="form-section">
-        <h3>{isEditing ? "Update Todo" : "Add New Todo"}</h3>
-
-        <form onSubmit={isEditing ? handleUpdate : handleSubmit}>
-
-
-          <input
-            type="text"
-            name="todo"
-            placeholder="Task"
-            value={formData.todo}
-            onChange={handleChange}
-            required
-          />
-
-          <input
-            type="text"
-            name="todo_desc"
-            placeholder="Todo Description"
-            value={formData.todo_desc}
-            onChange={handleChange}
-            required
-
-          />
-          <input
-            type="date"
-            name="deadline"
-            value={formData.deadline}
-            onChange={handleChange}
-            required
-          />
-          <label htmlFor="created-date">Date of creation</label>
-          <input
-            type="date"
-            name="created_at"
-            id="created-date"
-            value={formData.user_id}
-            onChange={handleChange}
-            required
-          />
-
-          <button type="submit" className="btn">
-            {isEditing ? "Update Todo" : "Add Todo"}
-          </button>
-        </form>
-      </div>
     </div>
   );
-}
 
+}
 export default TodoList;
