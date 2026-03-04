@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import "./Title.css";
 import TodoPopup from './TodoPopup'
 
+
 function TodoList() {
   const [todo, setTodo] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     todo: "",
     deadline: "",
@@ -22,16 +24,14 @@ function TodoList() {
     const newResult = result.map((r) => {
       return { ...r, status: r.todo_status }
     })
-
     setTodo(newResult)
-    // console.log(newResult)
   }
 
   useEffect(() => {
     fetchTodo()
   }, [])
 
-  // ADD TODO
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -40,7 +40,7 @@ function TodoList() {
       todo_desc: formData.todo_desc,
       deadline: formData.deadline,
       created_at: formData.created_at,
-      // updated_at: formData.updated_at,
+
       priority: formData.priority,
       todo_status: formData.status,
       user_id: 1,
@@ -54,7 +54,7 @@ function TodoList() {
       body: JSON.stringify(newTodo)
     });
     const data = await response.json();
-    // setTodo([...todo, data]);
+
     await fetchTodo();
     resetForm();
     setIsOpen(false);
@@ -65,39 +65,48 @@ function TodoList() {
     modal.style.display = "block";
   }
 
-  // REMOVE TODO
+  
   const removeButton = (todo_id) => {
     const updatedList = todo.filter((item) => item.todo_id !== todo_id);
     setTodo(updatedList);
   };
 
-  // CLICK UPDATE BUTTON (Fill form)
-  // const handleEdit = (item) => {
-  //   setFormData(item);
-  //   setIsEditing(true);
-  // };
+  
+  const handleEdit = (i) => {
+    setFormData({...i,
+      deadline: i.deadline
+      ? new Date(i.deadline).toISOString().split("T")[0]
+      : "",
+    created_at: i.created_at
+      ? new Date(i.created_at).toISOString().split("T")[0]
+      : "",
+    });
+    setIsEditing(true);
+    setIsOpen(true);
+  };
 
-  // UPDATE TODO
-  const handleUpdate = (e) => {
+ 
+  const handleUpdate = async (e) => {
     e.preventDefault();
-
-    const updatedList = todo.map((item) =>
-      item.todo === formData.todo
-        ? {
-          ...item,
+    const response = await fetch(
+      `http://localhost:5000/todo/${formData.todo_id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           todo: formData.todo,
           todo_desc: formData.todo_desc,
           deadline: formData.deadline,
-          created_at: formData.created_at,
           priority: formData.priority,
-          status: formData.status,
-
-        }
-        : item
+          todo_status: formData.status,
+        }),
+      }
     );
-
-    setTodo(updatedList);
-    // setIsEditing(false);
+    await fetchTodo();
+    setIsEditing(false);
+    setIsOpen(false);
     resetForm();
   };
 
@@ -123,9 +132,11 @@ function TodoList() {
       <div id="card" className="centre-div">
         <h2>Todos</h2>
         <div>
-          <TodoPopup isOpen={isOpen} setIsOpen={setIsOpen}  handleUpdate={handleUpdate} handleSubmit={handleSubmit} formData={formData}
+          <TodoPopup isOpen={isOpen} setIsOpen={setIsOpen} isEditing={isEditing} handleUpdate={handleUpdate} handleSubmit={handleSubmit} formData={formData}
             setFormData={setFormData} />
         </div>
+        
+
 
         {todo.map((i) => (
           <div key={i.todo_id} className="todo-item centre-div">
@@ -141,7 +152,7 @@ function TodoList() {
             >
               Update
             </button>
-
+            
             <button
               className="btn"
               onClick={() => removeButton(i.todo_id)}
