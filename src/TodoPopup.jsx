@@ -2,8 +2,8 @@ import { useState } from "react";
 
 function TodoPopup(props) {
 
-    const { isOpen, setIsOpen,isEditing,
-  handleUpdate, handleSubmit, formData,
+    const { isOpen, setIsOpen, isEditing,
+        handleUpdate, handleSubmit, formData,
         setFormData } = props
     const handleChange = (e) => {
         setFormData({
@@ -13,12 +13,16 @@ function TodoPopup(props) {
         }
         )
     };
+    const back = () => {
+        setIsOpen(false);
+        window.location.reload();
+    }
     return (
         <div className="modal">
             {isOpen && <div className="form-section modal-content">
-                <h3>{isEditing?"Update Todo": "Add New Todo"}</h3>
+                <h3>{isEditing ? "Update Todo" : "Add New Todo"}</h3>
 
-                <form onSubmit={ isEditing ? handleUpdate : handleSubmit}>
+                <form onSubmit={isEditing ? handleUpdate : handleSubmit}>
 
 
                     <input
@@ -73,10 +77,10 @@ function TodoPopup(props) {
                         </select>
                     </label>
                     <button type="submit" className="btn"  >
-                        {isEditing?"Update Todo": "Add New Todo"}
+                        {isEditing ? "Update Todo" : "Add New Todo"}
 
                     </button>
-                    <button type="button" className="btn" onClick={() => setIsOpen(false)}>
+                    <button type="button" className="btn" onClick={back} >
                         Back
                     </button>
                 </form>

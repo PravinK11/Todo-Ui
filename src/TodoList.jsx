@@ -18,20 +18,26 @@ function TodoList() {
     status: "",
   });
   const fetchTodo = async () => {
-    const todo = await fetch('http://localhost:5000/todo')
-    const result = await todo.json();
+    try {
+      const todo = await fetch('http://localhost:5000/todo')
+      const result = await todo.json();
 
-    const newResult = result.map((r) => {
-      return { ...r, status: r.todo_status }
-    })
-    setTodo(newResult)
+      const newResult = result.map((r) => {
+        return { ...r, status: r.todo_status }
+      })
+      setTodo(newResult)
+
+    } catch (error) {
+      console.log("error:", error)
+    }
+
   }
 
   useEffect(() => {
     fetchTodo()
   }, [])
 
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -45,69 +51,79 @@ function TodoList() {
       todo_status: formData.status,
       user_id: 1,
     };
-
-    const response = await fetch("http://localhost:5000/todo", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(newTodo)
-    });
-    const data = await response.json();
-
-    await fetchTodo();
-    resetForm();
-    setIsOpen(false);
+    try {
+      const response = await fetch("http://localhost:5000/todo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(newTodo)
+      });
+      await fetchTodo();
+      resetForm();
+      setIsOpen(false);
+    } catch (err) {
+      console.log("err:", err);
+    }
 
   };
 
-  const openForm = () => {
-    modal.style.display = "block";
-  }
-
-  
-  const removeButton = (todo_id) => {
-    const updatedList = todo.filter((item) => item.todo_id !== todo_id);
-    setTodo(updatedList);
+  const removeButton = async (i) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/todo/${i.todo_id}`,
+        {
+          method: "DELETE"
+        }
+      )
+      const result = await response.json();
+      console.log(result);
+      await fetchTodo();
+    } catch (error) {
+      console.log("error:", error);
+    }
   };
 
-  
   const handleEdit = (i) => {
-    setFormData({...i,
+    setFormData({
+      ...i,
       deadline: i.deadline
-      ? new Date(i.deadline).toISOString().split("T")[0]
-      : "",
-    created_at: i.created_at
-      ? new Date(i.created_at).toISOString().split("T")[0]
-      : "",
+        ? new Date(i.deadline).toISOString().split("T")[0]
+        : "",
+      created_at: i.created_at
+        ? new Date(i.created_at).toISOString().split("T")[0]
+        : "",
     });
     setIsEditing(true);
     setIsOpen(true);
   };
 
- 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    const response = await fetch(
-      `http://localhost:5000/todo/${formData.todo_id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          todo: formData.todo,
-          todo_desc: formData.todo_desc,
-          deadline: formData.deadline,
-          priority: formData.priority,
-          todo_status: formData.status,
-        }),
-      }
-    );
-    await fetchTodo();
-    setIsEditing(false);
-    setIsOpen(false);
-    resetForm();
+    try {
+      const response = await fetch(
+        `http://localhost:5000/todo/${formData.todo_id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            todo: formData.todo,
+            todo_desc: formData.todo_desc,
+            deadline: formData.deadline,
+            priority: formData.priority,
+            todo_status: formData.status,
+          }),
+        }
+      );
+      await fetchTodo();
+      setIsEditing(false);
+      setIsOpen(false);
+      resetForm();
+    } catch (error) {
+      console.log(`error:${error}`)
+    }
   };
 
   const resetForm = () => {
@@ -135,8 +151,6 @@ function TodoList() {
           <TodoPopup isOpen={isOpen} setIsOpen={setIsOpen} isEditing={isEditing} handleUpdate={handleUpdate} handleSubmit={handleSubmit} formData={formData}
             setFormData={setFormData} />
         </div>
-        
-
 
         {todo.map((i) => (
           <div key={i.todo_id} className="todo-item centre-div">
@@ -152,10 +166,10 @@ function TodoList() {
             >
               Update
             </button>
-            
+
             <button
               className="btn"
-              onClick={() => removeButton(i.todo_id)}
+              onClick={() => removeButton(i)}
             >
               Remove
             </button>
